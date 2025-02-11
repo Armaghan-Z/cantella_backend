@@ -128,46 +128,6 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# Routes for grade logger
-@app.route('/api/grade-tracker/log', methods=['POST'])
-def log_grade():
-    """
-    Log a new grade for a user.
-    """
-    try:
-        data = request.json
-        new_log = gradelog(
-            user_id=data['user_id'],
-            subject=data['subject'],
-            grade=data['grade'],  # Changed from hours_studied to grade
-            notes=data.get('notes', '')
-        )
-        db.session.add(new_log)
-        db.session.commit()
-        return jsonify({'message': 'Grade logged successfully'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/api/grade-tracker/progress/<int:user_id>', methods=['GET'])
-def get_grade_progress(user_id):
-    """
-    Retrieve all grades for a specific user.
-    """
-    try:
-        logs = gradelog.query.filter_by(user_id=user_id).all()
-        data = [
-            {
-                'subject': log.subject,
-                'grade': log.grade,  # Changed from hours to grade
-                'date': log.date.strftime('%Y-%m-%d')
-            }
-            for log in logs
-        ]
-        return jsonify(data), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 
 @app.errorhandler(404)
 def page_not_found(e):
