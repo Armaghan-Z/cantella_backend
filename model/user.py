@@ -16,16 +16,6 @@ user_classes = db.Table('user_classes',
 )
 
 
-""" gradelog Model """
-class gradelog(db.Model):
-    __tablename__ = 'gradelogs'  # Corrected table name
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, nullable=False)
-    subject = db.Column(db.String(100), nullable=False)
-    grade = db.Column(db.Float, nullable=False)  # Updated to represent grades
-    notes = db.Column(db.Text)
-    date = db.Column(db.DateTime, default=datetime.utcnow)
-
 """ Helper Functions """
 
 def default_year():
