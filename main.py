@@ -128,6 +128,46 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+# Routes for grade logger
+@app.route('/api/grade-tracker/log', methods=['POST'])
+def log_grade():
+    """
+    Log a new grade for a user.
+    """
+    try:
+        data = request.json
+        new_log = gradelog(
+            user_id=data['user_id'],
+            subject=data['subject'],
+            grade=data['grade'],  # Changed from hours_studied to grade
+            notes=data.get('notes', '')
+        )
+        db.session.add(new_log)
+        db.session.commit()
+        return jsonify({'message': 'Grade logged successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/grade-tracker/progress/<int:user_id>', methods=['GET'])
+def get_grade_progress(user_id):
+    """
+    Retrieve all grades for a specific user.
+    """
+    try:
+        logs = gradelog.query.filter_by(user_id=user_id).all()
+        data = [
+            {
+                'subject': log.subject,
+                'grade': log.grade,  # Changed from hours to grade
+                'date': log.date.strftime('%Y-%m-%d')
+            }
+            for log in logs
+        ]
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -492,15 +532,15 @@ def get_leaderboard():
     return jsonify(sorted_leaderboard), 200  # Send the sorted leaderboard as JSON with HTTP 200.
 
 
-def remove_duplicates():
-    with app.app_context():
-        seen_names = set()
-        for profile in Profile.query.all():
-            if profile.name in seen_names:
-                db.session.delete(profile)
-            else:
-                seen_names.add(profile.name)
-        db.session.commit()
+# def remove_duplicates():
+#     with app.app_context():
+#         seen_names = set()
+#         for profile in Profile.query.all():
+#             if profile.name in seen_names:
+#                 db.session.delete(profile)
+#             else:
+#                 seen_names.add(profile.name)
+#         db.session.commit()
 
 
 if __name__ == "__main__":
@@ -509,15 +549,15 @@ if __name__ == "__main__":
             db.create_all()  # Ensure tables are created before initialization
             if not User.query.first():  # Initialize only if no users exist
                 initUsers()
-            if not Flashcard.query.first():  # Initialize flashcards only if none exist
-                initFlashcards()
+            #if not Flashcard.query.first():  # Initialize flashcards only if none exist
+                #initFlashcards()
             if not GradeLog.query.first():  # Initialize grade logs only if none exist
                 initGradeLog()
-            if not Profile.query.first():  # Initialize profiles only if none exist
+           # if not Profile.query.first():  # Initialize profiles only if none exist
                 initProfiles()
             if not Deck.query.first():  # Initialize decks only if none exist
                 initDecks()
-            remove_duplicates()
+            # remove_duplicates()
             if not ChatLog.query.first(): # Initialize chat logs only if none exist
                 initChatLogs
     app.run(debug=True, host="0.0.0.0", port="8202")
