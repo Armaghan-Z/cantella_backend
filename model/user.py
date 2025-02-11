@@ -1,20 +1,13 @@
 # user.py
 from flask import current_app
 from flask_login import UserMixin
-from datetime import date, datetime
+from datetime import date
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import json
 
 from __init__ import app, db
-
-""" Association Table for User and Classes """
-user_classes = db.Table('user_classes',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('class_id', db.Integer, db.ForeignKey('classes.id'), primary_key=True)
-)
-
 
 """ Helper Functions """
 
@@ -34,33 +27,6 @@ def default_year():
         current_year += 1
     return current_year 
 
-""" Class Model """
-
-class Class(db.Model):
-    """
-    Class Model
-
-    Represents a class that users can join or leave.
-
-    Attributes:
-        __tablename__ (str): Name of the database table.
-        id (Column): The primary key for the class.
-        name (Column): Unique name of the class.
-        description (Column): Description of the class.
-    """
-    __tablename__ = 'classes'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), unique=True, nullable=False)
-    description = db.Column(db.String(255), nullable=True)
-
-    def __init__(self, name, description=""):
-        self.name = name
-        self.description = description
-
-    def __repr__(self):
-        return f"<Class {self.name}>"
-
 """ Database Models """
 
 ''' Tutorial: https://www.sqlalchemy.org/library.html#tutorials, try to get into Python shell and follow along '''
@@ -68,12 +34,10 @@ class Class(db.Model):
 class User(db.Model, UserMixin):
     """
     User Model
-
     This class represents the User model, which is used to manage actions in the 'users' table of the database. It is an
     implementation of Object Relational Mapping (ORM) using SQLAlchemy, allowing for easy interaction with the database
     using Python code. The User model includes various fields and methods to support user management, authentication,
     and profile management functionalities.
-
     Attributes:
         __tablename__ (str): Specifies the name of the table in the database.
         id (Column): The primary key, an integer representing the unique identifier for the user.
@@ -91,13 +55,10 @@ class User(db.Model, UserMixin):
     _email = db.Column(db.String(255), unique=False, nullable=False)
     _password = db.Column(db.String(255), unique=False, nullable=False)
     _role = db.Column(db.String(20), default="User", nullable=False)
-    _pfp = db.Column(db.String(255), unique=False, nullable=True)
-
-    # Many-to-Many Relationship with Classes
-    joined_classes = db.relationship('Class', secondary=user_classes, backref='students', lazy='dynamic')
-
+    _pfp = db.Column(db.String(255), unique=False, nullable=True)   
     posts = db.relationship('Post', backref='author', lazy=True)
-
+                                 
+    
     def __init__(self, name, uid, password="", role="User", pfp='', email='?'):
         """
         Constructor, 1st step in object creation.
@@ -115,7 +76,6 @@ class User(db.Model, UserMixin):
         self.set_password(password)
         self._role = role
         self._pfp = pfp
-
     # UserMixin/Flask-Login requires a get_id method to return the id as a string
     def get_id(self):
         """
@@ -158,8 +118,7 @@ class User(db.Model, UserMixin):
             bool: True if the user is anonymous, False otherwise.
         """
         return False
-
-    # Properties and Setters
+    
     @property
     def email(self):
         """
@@ -332,24 +291,6 @@ class User(db.Model, UserMixin):
         """
         self._pfp = pfp
 
-    # Class management methods
-    def join_class(self, class_instance):
-        if not self.is_in_class(class_instance):
-            self.joined_classes.append(class_instance)
-            db.session.commit()
-
-    def leave_class(self, class_instance):
-        if self.is_in_class(class_instance):
-            self.joined_classes.remove(class_instance)
-            db.session.commit()
-
-    def is_in_class(self, class_instance):
-        return self.joined_classes.filter(user_classes.c.class_id == class_instance.id).count() > 0
-
-    def get_classes(self):
-        return [cls.name for cls in self.joined_classes.all()]
-
-    # CRUD methods
     def create(self, inputs=None):
         """
         Adds a new record to the table and commits the transaction.
@@ -383,7 +324,7 @@ class User(db.Model, UserMixin):
             "name": self.name,
             "email": self.email,
             "role": self._role,
-            "joined_classes": self.get_classes()
+            "pfp": self._pfp,
         }
         return data
         
@@ -468,7 +409,6 @@ class User(db.Model, UserMixin):
     def set_uid(self, new_uid=None):
         """
         Updates the user's directory based on the new UID provided.
-
         Args:
             new_uid (str, optional): The new UID to update the user's directory.
         
@@ -527,7 +467,7 @@ def initUsers():
         
         u1 = User(name='Thomas Edison', uid=app.config['ADMIN_USER'], password=app.config['ADMIN_PASSWORD'], pfp='toby.png', role="Admin")
         u2 = User(name='Grace Hopper', uid=app.config['DEFAULT_USER'], password=app.config['DEFAULT_PASSWORD'], pfp='hop.png')
-        u3 = User(name='Nicholas Tesla', uid='niko', password='123niko', pfp='niko.png')
+        u3 = User(name='Nicholas Tesla', uid='niko', password='123niko', pfp='niko.png' )
         u4 = User(name='Xavier Thompson', uid="xat", password='123xat', pfp='xat.png', role='Admin')
         u5 = User(name='Armaghan Zarak', uid="az", password='123', pfp='niko.png', role='Admin')
         users = [u1, u2, u3, u4, u5]
