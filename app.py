@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
 # Initialize Flask application
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins='*')
+CORS(app, supports_credentials=True, origins=["https://xaviertho.github.io"])
 
 # ------------------------------
 # USER DATA API
