@@ -1,16 +1,16 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import random
-from model.leaderboard import LeaderboardEntry, getLeaderboard
+from model.leaderboard import LeaderboardEntry
 from __init__ import app, db
 from model.item import Item  # Assuming you have an Item model defined in the `model` folder
 from flask import Flask, render_template
 
 app = Flask(__name__)
 
-@app.route('/')
-def chat_tutor():
-    return render_template('chat_tutor.html')  # Render the chat_tutor.html template
+# @app.route('/')
+# def chat_tutor():
+#     return render_template('chat_tutor.html')  # Render the chat_tutor.html template
 
 if __name__ == '__main__':
     app.run(debug=True)
@@ -119,7 +119,7 @@ question_pool = [
 # Leaderboard data stored in memory
 leaderboard = []  # A list to store user names and their scores.
 
-print(getLeaderboard())
+
 # Route to fetch 10 random questions from the question pool
 @app.route('/api/quiz/apush', methods=['GET'])  # Endpoint to get APUSH quiz questions.
 def get_questions():
