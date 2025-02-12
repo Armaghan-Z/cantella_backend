@@ -543,24 +543,38 @@ def get_leaderboard():
 #         db.session.commit()
 
 
-if __name__ == "__main__":
-    if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+def init_database():
+    try:
         with app.app_context():
-            db.create_all()  # Ensure tables are created before initialization
-            if not User.query.first():  # Initialize only if no users exist
+            # Create all tables at once
+            db.create_all()
+            
+            # Only initialize data if tables are empty
+            if not User.query.first():
                 initUsers()
-            #if not Flashcard.query.first():  # Initialize flashcards only if none exist
-                #initFlashcards()
-            if not GradeLog.query.first():  # Initialize grade logs only if none exist
-                initGradeLog()
-           # if not Profile.query.first():  # Initialize profiles only if none exist
                 initProfiles()
-            if not Deck.query.first():  # Initialize decks only if none exist
+                initGradeLog()
                 initDecks()
-            # remove_duplicates()
-            if not ChatLog.query.first(): # Initialize chat logs only if none exist
-                initChatLogs
-    app.run(debug=True, host="0.0.0.0", port="8202")
+                
+            db.session.commit()
+            print("Database initialized successfully")
+    except Exception as e:
+        print(f"Database initialization error: {str(e)}")
+        db.session.rollback()
+
+
+if __name__ == "__main__":
+    if os.environ.get('FLASK_ENV') == 'production':
+        # Production settings
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/volumes/user_management.db'
+        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    else:
+        # Development settings
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/volumes/user_management.db'
+        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+        
+    init_database()
+    app.run(host="0.0.0.0", port="8202")
 
 
 
