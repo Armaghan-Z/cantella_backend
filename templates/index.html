@@ -2,17 +2,22 @@
 {% set project = "Home" %}
 
 {% block body %}
+    <!-- Center the body content with better spacing -->
     <div class="d-flex justify-content-center align-items-center vh-100">
         <div class="text-center">
-            <h1 class="text-white"><strong>Cantella Admin Panel</strong></h1>
+            <h1 class="text-white mb-4"><strong>Cantella Admin Panel</strong></h1>
             <div class="row justify-content-center">
-                <div class="col-md-4">
-                    <div class="card">
-                        <img class="card-img-top" src="{{ url_for('static', filename='assets/user.png') }}" alt="User Management" height="250">
-                        <div class="card-body">
+                <div class="col-md-6 col-lg-4">
+                    <div class="card p-3 shadow-lg" style="border-radius: 15px;">
+                        <img class="card-img-top mx-auto d-block" 
+                             src="{{ url_for('static', filename='assets/user.png') }}" 
+                             alt="Flask Development" 
+                             height="150" 
+                             style="width: 50%; object-fit: contain;">
+                        <div class="card-body text-center">
                             <h5 class="card-title">User Management</h5>
                             <p class="card-text">
-                                <ol>
+                                <ol class="text-start">
                                     <li>Add, remove, or modify users</li>
                                 </ol>
                             </p>
