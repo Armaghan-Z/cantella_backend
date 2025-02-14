@@ -492,6 +492,7 @@ if __name__ == "__main__":
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/volumes/user_management.db'
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
         
+    app.config['TIMEZONE'] = 'America/Los_Angeles'
     init_database()
     app.run(host="0.0.0.0", port="8202")
 

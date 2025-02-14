@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from __init__ import app, db
 from model.user import User
+import pytz
 
 class StudyLog(db.Model):
     """
@@ -19,20 +20,19 @@ class StudyLog(db.Model):
     subject = db.Column(db.String(100), nullable=False)      # subject of study
     hours_studied = db.Column(db.Float, nullable=False)      # amount of time studied (in hours)
     notes = db.Column(db.Text)                               # any additional notes
-    date = db.Column(db.DateTime, default=db.func.current_timestamp())  # timestamp of the study session
+    date = db.Column(db.DateTime, default=lambda: datetime.now(pytz.timezone('America/Los_Angeles')))
 
     def __init__(self, user_id, subject, hours_studied, notes='', date=None):
         """
         Constructor initializes the study log with user ID, subject, 
         hours studied, and notes. The date can be manually specified; 
-        otherwise, current timestamp is used.
+        otherwise, current Pacific time is used.
         """
         self.user_id = user_id
         self.subject = subject
         self.hours_studied = hours_studied
         self.notes = notes
-        if date:
-            self.date = date
+        self.date = date or datetime.now(pytz.timezone('America/Los_Angeles'))
 
     def __repr__(self):
         """
@@ -67,7 +67,7 @@ class StudyLog(db.Model):
             "subject": self.subject,
             "hours_studied": self.hours_studied,
             "notes": self.notes,
-            "date": self.date.strftime('%Y-%m-%d %H:%M:%S')
+            "date": self.date.astimezone(pytz.timezone('America/Los_Angeles')).strftime('%Y-%m-%d %H:%M:%S %Z')
         }
         return data
 
