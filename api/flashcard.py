@@ -1,79 +1,93 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
+from flask_restful import Api, Resource
+from flask_cors import CORS, cross_origin
+from api.jwt_authorize import token_required
 from model.flashcard import Flashcard
 from __init__ import db
-from api.jwt_authorize import token_required
 
-flashcard_api = Blueprint('flashcard_api', __name__, url_prefix='/api/flashcard')
 
-@flashcard_api.route('', methods=['POST'])
-@token_required()
-def create_flashcard():
-    """Create a new flashcard."""
-    data = request.json
-    title = data.get('title')
-    content = data.get('content')
-    user_id = data.get('user_id')
-    deck_id = data.get('deck_id')
+flashcard_api = Blueprint('flashcard_api', __name__, url_prefix='/api')
 
-    if not title or not content or not deck_id or not user_id:
-        return jsonify({"error": "Title, content, user ID, and deck ID are required."}), 400
+# ✅ Correctly enable CORS with credentials support
+CORS(
+    flashcard_api,
+    resources={r"/*": {"origins": "http://127.0.0.1:4887"}},
+    supports_credentials=True
+)
 
-    try:
-        flashcard = Flashcard(title=title, content=content, user_id=user_id, deck_id=deck_id)
-        flashcard.create()
-        return jsonify(flashcard.read()), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+api = Api(flashcard_api)
 
-@flashcard_api.route('/<int:flashcard_id>', methods=['GET'])
-def get_flashcard(flashcard_id):
-    """Retrieve a single flashcard."""
-    flashcard = Flashcard.query.get(flashcard_id)
-    if not flashcard:
-        return jsonify({"error": "Flashcard not found."}), 404
-    return jsonify(flashcard.read()), 200
+class FlashcardAPI:
+    class _CRUD(Resource):
+        @token_required()
+        @cross_origin(origins="http://127.0.0.1:4887", supports_credentials=True)  # ✅ Allow credentials
+        def post(self):
+            """Create a new flashcard."""
+            current_user = g.current_user
+            data = request.get_json()
 
-@flashcard_api.route('', methods=['GET'])
-@token_required()
-def get_all_flashcards():
-    """Retrieve all flashcards for the current user."""
-    flashcards = Flashcard.query.all()
-    return jsonify([flashcard.read() for flashcard in flashcards]), 200
+            if not data or 'title' not in data or 'content' not in data or 'deck_id' not in data:
+                return {'message': 'Title, content, and deck_id are required'}, 400
 
-@flashcard_api.route('/<int:flashcard_id>', methods=['PUT'])
-@token_required()
-def update_flashcard(flashcard_id):
-    """Update a specific flashcard."""
-    data = request.json
-    flashcard = Flashcard.query.get(flashcard_id)
+            flashcard = Flashcard(data['title'], data['content'], current_user.id, data['deck_id'])
+            flashcard = flashcard.create()
 
-    if not flashcard:
-        return jsonify({"error": "Flashcard not found."}), 404
+            if not flashcard:
+                return {'message': 'Failed to create flashcard'}, 400
 
-    if "title" in data:
-        flashcard._title = data["title"]
-    if "content" in data:
-        flashcard._content = data["content"]
+            return jsonify(flashcard.read())
 
-    try:
-        db.session.commit()
-        return jsonify(flashcard.read()), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        @token_required()
+        @cross_origin(origins="http://127.0.0.1:4887", supports_credentials=True)
+        def get(self):
+            """Get all flashcards for the current user."""
+            current_user = g.current_user
+            flashcards = Flashcard.query.filter_by(_user_id=current_user.id).all()
+            return jsonify([flashcard.read() for flashcard in flashcards])
 
-@flashcard_api.route('/<int:flashcard_id>', methods=['DELETE'])
-@token_required()
-def delete_flashcard(flashcard_id):
-    """Delete a flashcard."""
-    flashcard = Flashcard.query.get(flashcard_id)
+        @token_required()
+        @cross_origin(origins="http://127.0.0.1:4887", supports_credentials=True)
+        def put(self, flashcard_id):
+            """Update an existing flashcard."""
+            data = request.get_json()
+            if not data:
+                return {'message': 'Request body is missing'}, 400
 
-    if not flashcard:
-        return jsonify({"error": "Flashcard not found."}), 404
+            flashcard = Flashcard.query.get(flashcard_id)
+            if not flashcard or flashcard._user_id != g.current_user.id:
+                return {'message': 'Flashcard not found or unauthorized'}, 404
 
-    try:
-        flashcard.delete()
-        return jsonify({"message": f"Flashcard with ID {flashcard_id} deleted successfully"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+            if 'title' in data:
+                flashcard.title = data['title']
+            if 'content' in data:
+                flashcard.content = data['content']
+
+            flashcard.update(data)  # Ensure this correctly commits changes to the database
+
+            return jsonify(flashcard.read())
+
+        @token_required()
+        @cross_origin(origins="http://127.0.0.1:4887", supports_credentials=True)
+        def delete(self, flashcard_id):
+            """Delete a flashcard."""
+            flashcard = Flashcard.query.get(flashcard_id)
+
+            if not flashcard or flashcard._user_id != g.current_user.id:
+                return {'message': 'Flashcard not found or unauthorized'}, 404
+
+            try:
+                flashcard.delete()
+                return {'message': 'Flashcard deleted successfully'}, 200
+            except Exception as e:
+                db.session.rollback()  # Rollback in case of error
+                print(f"Error deleting flashcard: {e}")
+                return {'message': 'Failed to delete flashcard', 'error': str(e)}, 500
+
+
+    # ✅ Handle OPTIONS requests for preflight
+    @flashcard_api.route('/flashcard/<int:flashcard_id>', methods=['OPTIONS'])
+    @cross_origin(origins="http://127.0.0.1:4887", supports_credentials=True)
+    def flashcard_options(flashcard_id):
+        return '', 204  # Return an empty 204 response for preflight
+
+api.add_resource(FlashcardAPI._CRUD, '/flashcard', '/flashcard/<int:flashcard_id>')
