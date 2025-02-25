@@ -313,8 +313,8 @@ def restore_data_command():
 app.cli.add_command(custom_cli)
 
 
-genai.configure(api_key="AIzaSyAdopg5pOVdNN8eveu5ZQ4O4u4IZuK9NaY")
-model = genai.GenerativeModel('gemini-pro')
+genai.configure(api_key="AIzaSyD7DQZlIvCo79fjHjUBYrApmFkRKZ12HSE")
+model = genai.GenerativeModel('gemini-2.0-flash')
 @app.route('/api/ai/help', methods=['POST'])
 def ai_homework_help():
     data = request.get_json()
