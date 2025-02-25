@@ -11,16 +11,18 @@ flashcard_api = Blueprint('flashcard_api', __name__, url_prefix='/api')
 # ✅ Correctly enable CORS with credentials support
 CORS(
     flashcard_api,
-    resources={r"/*": {"origins": "http://127.0.0.1:4887"}},
+    resources={r"/*": {"origins": ["http://127.0.0.1:4887", "https://xaviertho.github.io"]}},
     supports_credentials=True
 )
+
 
 api = Api(flashcard_api)
 
 class FlashcardAPI:
     class _CRUD(Resource):
         @token_required()
-        @cross_origin(origins="http://127.0.0.1:4887", supports_credentials=True)  # ✅ Allow credentials
+        @cross_origin(origins=["http://127.0.0.1:4887", "https://xaviertho.github.io"], supports_credentials=True)
+  # ✅ Allow credentials
         def post(self):
             """Create a new flashcard."""
             current_user = g.current_user
@@ -38,7 +40,7 @@ class FlashcardAPI:
             return jsonify(flashcard.read())
 
         @token_required()
-        @cross_origin(origins="http://127.0.0.1:4887", supports_credentials=True)
+        @cross_origin(origins=["http://127.0.0.1:4887", "https://xaviertho.github.io"], supports_credentials=True)
         def get(self):
             """Get all flashcards for the current user."""
             current_user = g.current_user
@@ -46,7 +48,7 @@ class FlashcardAPI:
             return jsonify([flashcard.read() for flashcard in flashcards])
 
         @token_required()
-        @cross_origin(origins="http://127.0.0.1:4887", supports_credentials=True)
+        @cross_origin(origins=["http://127.0.0.1:4887", "https://xaviertho.github.io"], supports_credentials=True)
         def put(self, flashcard_id):
             """Update an existing flashcard."""
             data = request.get_json()
@@ -67,7 +69,7 @@ class FlashcardAPI:
             return jsonify(flashcard.read())
 
         @token_required()
-        @cross_origin(origins="http://127.0.0.1:4887", supports_credentials=True)
+        @cross_origin(origins=["http://127.0.0.1:4887", "https://xaviertho.github.io"], supports_credentials=True)
         def delete(self, flashcard_id):
             """Delete a flashcard."""
             flashcard = Flashcard.query.get(flashcard_id)
@@ -86,8 +88,13 @@ class FlashcardAPI:
 
     # ✅ Handle OPTIONS requests for preflight
     @flashcard_api.route('/flashcard/<int:flashcard_id>', methods=['OPTIONS'])
-    @cross_origin(origins="http://127.0.0.1:4887", supports_credentials=True)
+    @cross_origin(origins=["http://127.0.0.1:4887", "https://xaviertho.github.io"], supports_credentials=True)
     def flashcard_options(flashcard_id):
+        response = jsonify({})
+        response.headers.add("Access-Control-Allow-Origin", "https://xaviertho.github.io")
+        response.headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
         return '', 204  # Return an empty 204 response for preflight
 
 api.add_resource(FlashcardAPI._CRUD, '/flashcard', '/flashcard/<int:flashcard_id>')
