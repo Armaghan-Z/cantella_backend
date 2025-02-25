@@ -5,6 +5,7 @@
 <div class="text-center">
     <h1 class="text-white mb-4"><strong>Cantella Admin Panel</strong></h1>
     <div class="row justify-content-center">
+        <!-- User Management Box -->
         <div class="col-md-6 col-lg-4">
             <div class="card p-3 shadow-lg" style="border-radius: 15px;">
                 <img class="card-img-top mx-auto d-block" 
@@ -19,6 +20,29 @@
                         </ol>
                     </p>
                     <a href="https://cantella.stu.nighthawkcodingsociety.com/users/table2" class="btn btn-primary d-block mx-auto">Manage Users</a>
+                </div>
+            </div>
+        </div>  
+
+        <!-- Admin Roles Box -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card p-3 shadow-lg" style="border-radius: 15px;">
+                <img class="card-img-top mx-auto d-block" 
+                     src="{{ url_for('static', filename='assets/admin.png') }}" 
+                     alt="Admin Roles" 
+                     style="width: 50%;">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Admin Roles</h5>
+                    <p class="card-text">
+                        <ol class="text-start">
+                            <li><strong>Backend Admin Engineer:</strong> Zafeer and Armaghan</li>
+                            <li><strong>Scrum Master:</strong> Xavier</li>
+                            <li><strong>Assistant Scrum Master:</strong> Nolan</li>
+                            <li><strong>Assistant Deployment Admin:</strong> Armaghan</li>
+                            <li><strong>Frontend UX Designer:</strong> Jackson and Arush</li>
+                            <li><strong>Deployment Admin:</strong> Xavier</li>
+                        </ol>
+                    </p>
                 </div>
             </div>
         </div>  
