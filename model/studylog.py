@@ -162,3 +162,4 @@ def initStudyLog():
             except IntegrityError:
                 db.session.rollback()
                 logging.warning(f"IntegrityError: Could not add studylog with subject '{studylog.subject}' due to missing user_id.")
+                
