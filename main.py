@@ -221,6 +221,16 @@ def reset_password(user_id):
 def get_id():
     return jsonify({"message": "API is working!"}), 200
 
+@app.route("/flashcards")
+@login_required
+def flashcard_page():
+    if current_user.role == "Admin":
+        flashcards = Flashcard.query.all()  # Admin sees all flashcards
+    else:
+        flashcards = Flashcard.query.filter_by(_user_id=current_user.id).all()  # Users see their own flashcards
+
+    return render_template("flashcard_table.html", flashcards=flashcards)
+
 
 # Custom CLI Commands
 custom_cli = AppGroup('custom', help='Custom commands')
