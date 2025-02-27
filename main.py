@@ -224,12 +224,18 @@ def get_id():
 @app.route("/flashcards")
 @login_required
 def flashcard_page():
+    """Render the Flashcard Management page"""
     if current_user.role == "Admin":
-        flashcards = Flashcard.query.all()  # Admin sees all flashcards
+        flashcards = Flashcard.query.all()  # Admins see all flashcards
     else:
-        flashcards = Flashcard.query.filter_by(_user_id=current_user.id).all()  # Users see their own flashcards
+        flashcards = Flashcard.query.filter_by(_user_id=current_user.id).all()  # Users see only their own flashcards
+
+    print(f"Flashcards fetched: {len(flashcards)}")  # Debugging log
+    for flashcard in flashcards:
+        print(flashcard.read())  # Debugging log
 
     return render_template("flashcard_table.html", flashcards=flashcards)
+
 
 
 # Custom CLI Commands
