@@ -51,32 +51,22 @@ class FlashcardAPI:
         @cross_origin(origins=["http://127.0.0.1:4887", "https://xaviertho.github.io"], supports_credentials=True)
         def put(self, flashcard_id):
             """Update an existing flashcard."""
-            print(f"🔍 Attempting to update Flashcard ID: {flashcard_id}")  # Debug log
             data = request.get_json()
-            
             if not data:
                 return {'message': 'Request body is missing'}, 400
 
             flashcard = Flashcard.query.get(flashcard_id)
-            if not flashcard:
-                print(f"❌ Flashcard ID {flashcard_id} not found in database!")  # Debug log
-                return {'message': 'Flashcard not found'}, 404
+            if not flashcard or flashcard._user_id != g.current_user.id:
+                return {'message': 'Flashcard not found or unauthorized'}, 404
 
-            if flashcard._user_id != g.current_user.id:
-                print(f"❌ Unauthorized update attempt by User ID: {g.current_user.id}")  # Debug log
-                return {'message': 'Unauthorized to update this flashcard'}, 403
-
-            # Apply updates
             if 'title' in data:
-                flashcard._title = data['title']
+                flashcard.title = data['title']
             if 'content' in data:
-                flashcard._content = data['content']
+                flashcard.content = data['content']
 
-            db.session.commit()  # Save changes
-            print(f"✅ Flashcard ID {flashcard_id} updated successfully!")  # Debug log
+            flashcard.update(data)  # Ensure this correctly commits changes to the database
 
             return jsonify(flashcard.read())
-
 
         @token_required()
         @cross_origin(origins=["http://127.0.0.1:4887", "https://xaviertho.github.io"], supports_credentials=True)
@@ -84,24 +74,16 @@ class FlashcardAPI:
             """Delete a flashcard."""
             flashcard = Flashcard.query.get(flashcard_id)
 
-            print(f"Attempting to delete Flashcard ID: {flashcard_id}")  # 🔍 Debugging log
-
-            if not flashcard:
-                print("Flashcard not found!")  # 🔍 Debugging log
-                return {'message': 'Flashcard not found'}, 404
-
-            if flashcard._user_id != g.current_user.id:
-                print(f"Unauthorized delete attempt by User ID: {g.current_user.id}")  # 🔍 Debugging log
-                return {'message': 'Unauthorized to delete this flashcard'}, 403
+            if not flashcard or flashcard._user_id != g.current_user.id:
+                return {'message': 'Flashcard not found or unauthorized'}, 404
 
             try:
                 flashcard.delete()
                 return {'message': 'Flashcard deleted successfully'}, 200
             except Exception as e:
-                db.session.rollback()
-                print(f"Error while deleting flashcard: {e}")  # 🔍 Debugging log
+                db.session.rollback()  # Rollback in case of error
+                print(f"Error deleting flashcard: {e}")
                 return {'message': 'Failed to delete flashcard', 'error': str(e)}, 500
-
 
 
     # ✅ Handle OPTIONS requests for preflight
